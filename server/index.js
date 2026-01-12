@@ -37,6 +37,28 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Helper function to retry failed requests
+async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      // Don't retry on authentication or validation errors
+      if (error.message.includes('401') || error.message.includes('400')) {
+        throw error;
+      }
+
+      if (attempt === maxRetries) {
+        throw error;
+      }
+
+      const delay = initialDelay * Math.pow(2, attempt - 1);
+      console.log(`Attempt ${attempt} failed. Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
 // Transcription endpoint - converts audio to text using Groq Whisper API
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   try {
@@ -55,31 +77,50 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 
     console.log(`Processing audio: ${req.file.originalname} (${(req.file.size / 1024 / 1024).toFixed(2)}MB)`);
 
-    // Prepare form data for Groq API
-    const formData = new FormData();
-    formData.append('file', req.file.buffer, {
-      filename: req.file.originalname || 'audio.mp3',
-      contentType: req.file.mimetype
-    });
-    formData.append('model', 'whisper-large-v3');
-    formData.append('response_format', 'json');
+    // Use retry logic for network resilience
+    const transcribe = async () => {
+      // Prepare form data for Groq API
+      const formData = new FormData();
+      formData.append('file', req.file.buffer, {
+        filename: req.file.originalname || 'audio.mp3',
+        contentType: req.file.mimetype
+      });
+      formData.append('model', 'whisper-large-v3');
+      formData.append('response_format', 'json');
 
-    // Call Groq Whisper API
-    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
-        ...formData.getHeaders()
-      },
-      body: formData
-    });
+      // Call Groq Whisper API with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Groq API error (${response.status}): ${errorText}`);
-    }
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqApiKey}`,
+            ...formData.getHeaders()
+          },
+          body: formData,
+          signal: controller.signal
+        });
 
-    const data = await response.json();
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Groq API error (${response.status}): ${errorText}`);
+        }
+
+        return await response.json();
+      } catch (err) {
+        clearTimeout(timeout);
+        if (err.name === 'AbortError') {
+          throw new Error('Request timeout - please check your internet connection');
+        }
+        throw err;
+      }
+    };
+
+    const data = await retryWithBackoff(transcribe, 3, 2000);
     const text = data.text?.trim() || '';
 
     if (!text) {
@@ -107,6 +148,9 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     }
     if (error.message.includes('429')) {
       return res.status(429).json({ error: 'Rate limit exceeded. Please wait a moment.' });
+    }
+    if (error.message.includes('timeout') || error.message.includes('ECONNREFUSED') || error.message.includes('ETIMEDOUT')) {
+      return res.status(503).json({ error: 'Network error. Please check your internet connection and try again.' });
     }
 
     res.status(500).json({ error: 'Transcription failed', details: error.message });
