@@ -179,7 +179,7 @@ app.post('/api/analyze', express.json({ limit: '50mb' }), async (req, res) => {
 
     // Initialize Gemini AI
     const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     // Generate structured French business report
     const prompt = `You are a professional Business Analyst. Analyze the following text and create a structured French business report.
