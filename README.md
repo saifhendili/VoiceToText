@@ -1,70 +1,145 @@
-# Getting Started with Create React App
+# Audio to Text Converter
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern web application that converts audio files to text using Groq Whisper API, with AI-powered business report generation using Google Gemini.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- Audio transcription using Groq Whisper API (free)
+- Automatic audio chunking for long files
+- AI-powered French business report generation using Google Gemini
+- PDF export of analysis reports
+- Support for all major audio formats (MP3, WAV, M4A, OGG, FLAC)
+- Client-side audio processing (no local installations needed)
 
-### `npm start`
+## Prerequisites
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Node.js (v14 or higher)
+- npm or yarn
+- Free API keys:
+  - [Groq API Key](https://console.groq.com) (for transcription)
+  - [Google Gemini API Key](https://aistudio.google.com/app/apikey) (for AI analysis)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Quick Start
 
-### `npm test`
+### 1. Install Dependencies
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+# Install frontend dependencies
+npm install
 
-### `npm run build`
+# Install server dependencies
+cd server
+npm install
+cd ..
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 2. Configure API Keys
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Create a `.env` file in the `server` folder:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+cd server
+```
 
-### `npm run eject`
+Create `server/.env` file with:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```env
+GROQ_API_KEY=your_groq_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+PORT=5000
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 3. Start the Application
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Open two terminal windows:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+**Terminal 1 - Start Backend Server:**
+```bash
+cd server
+npm start
+```
 
-## Learn More
+**Terminal 2 - Start Frontend:**
+```bash
+npm start
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The application will open automatically at [http://localhost:3000](http://localhost:3000)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## How to Use
 
-### Code Splitting
+1. **Upload Audio**: Click "Choose Audio File" and select your audio file
+2. **Transcribe**: Click "Transcribe Audio" to convert speech to text
+3. **Analyze**: Click "Analyze with AI" to generate a French business report
+4. **Export**: Click "Download PDF" to save the analysis report
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## How It Works
 
-### Analyzing the Bundle Size
+### Audio Processing
+- Long audio files are automatically split into 2-minute chunks
+- Each chunk is converted to 16kHz mono WAV format
+- Chunks are processed sequentially with rate limiting
+- Transcriptions are combined into final text
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### AI Analysis
+- Transcribed text is analyzed by Google Gemini
+- Generates structured French business reports
+- Includes sections: Overview, Context, Pain Points, Expectations, Tasks, and AI Suggestions
 
-### Making a Progressive Web App
+## Project Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```
+eyaproject/
+├── public/           # Static files
+├── src/
+│   ├── App.js       # Main React component
+│   ├── App.css      # Styles
+│   └── index.js     # React entry point
+├── server/
+│   ├── index.js     # Express server
+│   ├── .env         # API keys (create this)
+│   └── package.json # Server dependencies
+├── package.json     # Frontend dependencies
+└── README.md        # This file
+```
 
-### Advanced Configuration
+## API Endpoints
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Backend Server (Port 5000)
 
-### Deployment
+- `GET /api/health` - Health check
+- `POST /api/transcribe` - Upload audio for transcription
+- `POST /api/analyze` - Generate AI analysis from text
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Technologies Used
 
-### `npm run build` fails to minify
+- **Frontend**: React, Web Audio API, jsPDF
+- **Backend**: Express.js, Node.js
+- **APIs**: Groq Whisper (transcription), Google Gemini (AI analysis)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Troubleshooting
+
+**Audio file too large error:**
+- Files are automatically chunked, but very long files may take time
+- Wait 1 second between chunks to avoid rate limits
+
+**API key errors:**
+- Verify your API keys in `server/.env`
+- Get new keys from the respective websites
+
+**Server not starting:**
+- Check if port 5000 is already in use
+- Change PORT in `server/.env` if needed
+
+## Free API Limits
+
+- **Groq**: Generous free tier with Whisper-large-v3
+- **Google Gemini**: Free tier includes gemini-1.5-flash-8b model
+
+## License
+
+MIT License
+
+## Support
+
+For issues or questions, please open an issue on GitHub.
