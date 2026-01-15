@@ -116,10 +116,26 @@ body {
   position: relative;
 }
 
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.logo {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+}
+
 .header h1 {
   font-size: 2.5rem;
   font-weight: 700;
-  margin-bottom: var(--space-sm);
+  margin: 0;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }

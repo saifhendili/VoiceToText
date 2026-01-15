@@ -357,8 +357,11 @@ function App() {
     <div className="app">
       <div className="container">
         <header className="header">
-          <h1>Audio to Text Converter</h1>
-          <p>Upload audio, get instant transcription and AI-powered business reports</p>
+          <div className="logo-container">
+            <img src="/gologo.png" alt="FusionBrief Logo" className="logo" />
+            <h1>FusionBrief</h1>
+          </div>
+          <p>Transform audio into professional business reports with AI</p>
         </header>
 
         <main className="main">
